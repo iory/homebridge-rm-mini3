@@ -3,6 +3,7 @@ var inherits = require('util').inherits;
 var HomeKitTVTypes;
 var HKTTGen = require('./HomeKitTVTypes');
 var sender = require('./sender');
+var request = require("request");
 
 
 module.exports = function (homebridge) {
@@ -19,6 +20,25 @@ function RMMini3Accessory(log, config) {
   this.host = config["host"];
   this.name = config["name"];
   this.data = config["data"];
+
+  this.makerkey = config["makerkey"];
+}
+
+function SendWebHook(name, state, makerkey) {
+  var url = "https://maker.ifttt.com/trigger/" + name + state + "/with/key/" + makerkey;
+  var method = "get";
+  request({
+    url: url,
+    method: method
+  }, function(err, response) {
+    if (err) {
+      console.log("There was a problem sending command " + name + state + " to" + that.name);
+      console.log(url);
+    } else {
+      console.log("sent command " + name + state);
+      console.log(url);
+    }
+  });
 }
 
 RMMini3Accessory.prototype = {
@@ -30,11 +50,13 @@ RMMini3Accessory.prototype = {
         callback();
         // callback('error');
       });
+      SendWebHook(this.name, "On", this.makerkey);
     } else {
       sender(this.host, payloadPowerOff, function (err) {
         callback();
         // callback('error');
       });
+      SendWebHook(this.name, "Off", this.makerkey);
     }
   },
 
@@ -92,4 +114,3 @@ RMMini3Accessory.prototype = {
     return services;
   }
 };
-
